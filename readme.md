@@ -1,199 +1,389 @@
-**THIS GUIDE IS UNDER DEVELOPMENT AND MAY NOT BE FUNCTIONAL - THIS MESSAGE WILL BE REMOVED WHEN THE GUIDE IS READY FOR USE. IF YOU HAVE ANY QUESTIONS, PLEASE OPEN AN ISSUE TICKET. IF YOU WOULD LIKE TO CONTRIBUTE TO THIS GUIDE, PLEASE SUBMIT A PR WITH YOUR UPDATES, THANK YOU.** 
+# NSX-T 2.5.0 Configuration for Enterprise PKS
 
-**PLEASE DO NOT REMOVE ANYTHING ABOVE THIS LINE UNTIL YOUR GUIDE IS COMPLETE AND VALIDATED FOR END USER CONSUMPTION** 
+## Overview
 
-## ModernApps.ninja starter guide template 
+The following installation guide walks through the configuration of NSX-T 2.5.0 for VMware Enterprise PKS. The steps and variables used in this Lab Guide are specific to the PKS-Ninja-T1-{BuildName}0.x lab templates. 
 
-Please reference the content below for formatting examples, and replace with your desired content.
-# Lab Excercise Page Syle Template - 1st level - Main Header
+ Anyone is welcome to build a similar lab environment and follow along with the lab exercises, but please note you will need to replace any variables such as IP addresses and FQDNs and replace them with the appropriate values for your lab environment.
 
-**Contents:**
+The steps provided in this lab guide are intended for a lab implementation and do not necessarily align with best practices for production implementiations. While the instructions provided in this lab guide did work for the author in their lab environment, VMware and/or any contributors to this Guide provide no assurance, warranty or support for any content provided in this guide.
 
-- [Step 1: ]()
-- [Step 2: ]()
-- [Step 3: ]()
-- [Step 4: ]()
-- [Step 5: ]()
-- [Next Steps]()
+## Prerequisites
 
-## Step 1: 2nd level header, steps often have multiple substeps and subsections
+- To use this lab guide, you must use either the PKS-Ninja-T1-NsxtInstalled template, or if you prefer to install NSX-T yourself, you can also load the PKS-Ninja-T1-
 
-1.1 Uses dotted decimal numbering. This sentence 1.1 is a substep of step 1. Use a single decimal format for each substep that itself does not have other substeps. For substeps that have their own substeps, use a subsection format shown in steps 1.2 and 1.3
+- Please see [Getting Access to a PKS Ninja Lab Environment](https://github.com/CNA-Tech/PKS-Ninja/tree/Pks1.6/Courses/GetLabAccess-LA8528) to learn about how to access or build a compatible lab environment
 
-This format is intended to find an optimal balance of usability for the user and flexibility and simplicity for content developers. As this paragraph demonstrates, its perfectly fine to add prose inline within each step as needed to sufficiently explain the step, keeping in mind that it is crucial for user experience to keep the document streamlined, and so recommend liberal use of hidden and expandable section blocks as shown below
+## Installation Notes
 
-<details><summary>Click to expand</summary>
+Anyone who implements any software used in this lab must provide their own licensing and ensure that their use of all software is in accordance with the software's licensing. This guide provides no access to any software licenses.
 
-If you have any long text sections such as detailed explanations, code examples, configuration files, etc, please wrap them in expanding sections as shown here.
+For those needing access to VMware licensing for lab and educational purposes, we recommend contacting your VMware account team. Also, the [VMware User Group's VMUG Advantage Program](https://www.vmug.com/Join/VMUG-Advantage-Membership) provides a low-cost method of gaining access to VMware licenses for evaluation purposes.
 
-Keep in mind this template is optimized for Lab Exercise guides which generally include lots of tasks that the reader needs to do. 
+This lab guide follows steps that are customized for a specific lab environment, to support other implementations and to find additional information, please see the [Installing Enterprise PKS on vSphere with NSX-T Data Center](https://docs.vmware.com/en/VMware-Enterprise-PKS/1.6/vmware-enterprise-pks-16/GUID-vsphere-nsxt-index.html) page in the VMware Enterprise PKS 1.6 Documentation. 
 
-Also please place all images inside expanding blocks, further details about images will be shown in step 1.4 below
+## Overview of Tasks Covered in Lab 1
 
+- [NSX-T 2.5.0 Configuration for Enterprise PKS](#nsx-t-250-configuration-for-enterprise-pks)
+  - [Overview](#overview)
+  - [Prerequisites](#prerequisites)
+  - [Installation Notes](#installation-notes)
+  - [Overview of Tasks Covered in Lab 1](#overview-of-tasks-covered-in-lab-1)
+- [Step 1: Create T0 Logical Router for Enterprise PKS](#step-1-create-t0-logical-router-for-enterprise-pks)
+  - [Step 2: Create the Enterprise PKS Management Plane](#step-2-create-the-enterprise-pks-management-plane)
+  - [Step 3: Create NAT Rules for PKS Management and Compute Plane Operations](#step-3-create-nat-rules-for-pks-management-and-compute-plane-operations)
+  - [Step 4: Create IP Pools & Blocks needed for PKS](#step-4-create-ip-pools--blocks-needed-for-pks)
+
+-----------------------
+
+# Step 1: Create T0 Logical Router for Enterprise PKS
+
+<details><Summary>Expand to see list of steps for T0 Router installation & configuration</Summary>
+
+- Define a T0 logical switch with an ingress/egress uplink port. Attach the T0 LS to the VLAN Transport Zone.
+- Create a logical router port and assign to it a routable CIDR block, for example 10.172.1.0/28, that your environment uses to route to all Enterprise PKS-assigned IP pools and IP blocks.
+- Connect the T0 router to the uplink VLAN logical switch.
+- Attach the T0 router to the Edge Cluster and set HA mode to Active-Standby. NAT rules are applied on the T0 by NCP. If the T0 router is not set in Active-Standby mode, the router does not support NAT rule configuration.
+- Lastly, configure T0 routing to the rest of your environment using the appropriate routing protocol for your environment or by using static routes.
+  
 </details>
 <br/>
 
-1.2 Minor subsection headers
+1.1 Create VLAN Uplink Switch
 
-1.2.1 if you have a substep that includes its own substeps, you need a subsection. This style guide offers two options for subsection handling, the minor subsection format shown here in step 1.2, and the major subsection format shown in step 1.3
+Log into the NSX Manager UI with username `admin` and password `VMware1!VMware1!`,  navigate to the **Advanced Networking & Security > Switching** page and click on `+ADD`, add a logical switch with the following parameters:
 
-### 1.3 Major Subsection Headers
+- General Tab
+  - Name: `uplink-vlan-ls`
+  - Transport Zone: `vlan-tz`
+  - VLAN: `0` _(Press [Enter] key after input to store it)_
+- Switching Profiles tab
+  - Leave all values to default
+- Click on **ADD**
 
-Use major subsection headers whenever they are a better fit for the flow of your document. It is fine to use both minor and major subsection styles within the same document, so long as the overall flow and organization of the document make sense to the reader
+<details><Summary>Screenshot 1.1.1</Summary>
+<img src="Images/2019-07-13-09-01-38.png">
+</details>
 
-The rest of the text below is sample text copied from a lab exercise guide that uses this style
-
-1.3.1 Make a copy of the `frontend-deployment_all_k8s.yaml` file, save it as `frontend-deployment_ingress.yaml`
-
-Example:
-`cp frontend-deployment_all_k8s.yaml frontend-deployment_ingress.yaml`
-
-1.3.2 Get the URL of your smarcluster with the following command, be sure to replace 'afewell-cluster' with the name of your cluster:
-
-``` bash
-vke cluster show afewell-cluster | grep Address
-```
-
-<details><summary>Screenshot 1.3.2</summary>
-<img src="Images/2018-10-20-15-45-19.png">
+<details><Summary>Screenshot 1.1.2</Summary>
+<img src="Images/2019-06-15-12-18-48.png">
 </details>
 <br/>
 
-1.3.3 Edit the `frontend-deployment_ingress.yaml` file, near the bottom of the file in the ingress spec section, change the value for spec.rules.host to URL for your smartcluster as shown in the following snippet:
+1.2 - In the NSX Manager UI, navigate to  **`Advanced Networking & Security > Routers`**, and then click on **`+ADD > Tier-0 Router`** and add a new router with the following parameters:
 
-NOTE: Be sure to replace the URL shown here with the URL for your own smartcluster
+- Name: `t0-pks`
+- Edge Cluster: `edge-cluster-1`
+- High Availabilty Mode: **`Active-Standby`**
+- Fail Over: `Non Preemptive`
+- Click **Add**
 
-``` bash
-spec:
-  rules:
-  - host: afewell-cluster-69fc65f8-d37d-11e8-918b-0a1dada1e740.fa2c1d78-9f00-4e30-8268-4ab81862080d.vke-user.com
-    http:
-      paths:
-      - backend:
-          serviceName: planespotter-frontend
-          servicePort: 80
-```
+<details><Summary>Screenshot 1.2.1</Summary>
+<img src="Images/2019-07-13-09-07-23.png">
+</details>
 
-<details><summary>Click to expand to see the full contents of frontend-deployment_ingress.yaml</summary>
-
-When reviewing the file contents below, observe that it includes a ClusterIP service spec which only provides an IP address that is usable for pod-to-pod communications in the cluster. The file also includes an ingress spec which implements the default VKE ingress controller.
-
-In the following steps after you deploy the planespotter-frontend with ingress controller, you will be able to browse from your workstation to the running planespotter app in your VKE environment even though you have not assigned a nat or public IP for the service.
-
-Ingress controllers act as a proxies, recieving http/s requests from external clients and then based on the URL hostname or path, the ingress controller will proxy the request to the corresponding back-end service. For example mysite.com/path1 and mysite.com/path2 can be routed to different backing services running in the kubernetes cluster.
-
-In the file below, no rules are specified to different paths and so accordingly, all requests sent to the host defined in the spec, your VKE SmartCluster URL, will be proxied by the ingress controller to the planespotter-frontend ClusterIP service also defined in the frontend-deployment_ingress.yaml file
-
-``` bash
----
-apiVersion: apps/v1beta1
-kind: Deployment
-metadata:
-  name: planespotter-frontend
-  namespace: planespotter
-  labels:
-    app: planespotter-frontend
-    tier: frontend
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: planespotter-frontend
-  template:
-    metadata:
-      labels:
-        app: planespotter-frontend
-        tier: frontend
-    spec:
-      containers:
-      - name: planespotter-fe
-        image: yfauser/planespotter-frontend:d0b30abec8bfdbde01a36d07b30b2a3802d9ccbb
-        imagePullPolicy: IfNotPresent
-        env:
-        - name: PLANESPOTTER_API_ENDPOINT
-          value: planespotter-svc
-        - name: TIMEOUT_REG
-          value: "5"
-        - name: TIMEOUT_OTHER
-          value: "5"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: planespotter-frontend
-  namespace: planespotter
-  labels:
-    app: planespotter-frontend
-spec:
-  ports:
-    # the port that this service should serve on
-    - port: 80
-  selector:
-    app: planespotter-frontend
----
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: planespotter-frontend
-  namespace: planespotter
-spec:
-  rules:
-  - host: afewell-cluster-69fc65f8-d37d-11e8-918b-0a1dada1e740.fa2c1d78-9f00-4e30-8268-4ab81862080d.vke-user.com
-    http:
-      paths:
-      - backend:
-          serviceName: planespotter-frontend
-          servicePort: 80
-```
-
+<details><Summary>Screenshot 1.2.2</Summary>
+<img src="Images/2019-06-15-12-20-16.png">
 </details>
 <br/>
 
-1.3.4 Run the updated planespotter-frontend app and verify deployment with the following commands. Make note of the external IP address/hostname shown in the output of `kubectl get services`
+1.3 Navigate to the `Advanced Networking & Security > Routers` page, select the `t0-pks` router, and on the `Configuration` pulldown menu, select `Router Ports`
 
-``` bash
-kubectl create -f frontend-deployment_ingress.yaml
-kubectl get pods
-kubectl get deployments
-kubectl get services
-kubectl get ingress
-kubectl describe ingress
-```
-
-<details><summary>Screenshot 1.3.4</summary>
-<img src="Images/2018-10-20-16-11-14.png">
-</details>
-
-1.3.5 Open a browser and go to the url of your VKE SmartCluster to verify that planespotter-frontend is externally accessible with the LoadBalancer service
-
-<details><summary>Screenshot 5.5.5</summary>
-<img src="Images/2018-10-20-16-26-46.png">
+<details><summary>Screenshot 1.3</summary>
+<img src="Images/2019-06-15-11-56-17.png">
 </details>
 <br/>
 
-1.3.6 Clean up the planespotter-frontend components and verify with the following commands:
+1.4 In the `Logical Router Ports` pane, click `+ADD` and add a router port with the following parameters:
 
-``` bash
-kubectl delete -f frontend-deployment_ingress.yaml
-kubectl get pods
-kubectl get deployments
-kubectl get services
-kubectl get ingress
-```
+- Name: `t0-uplink-1`
+- Type: `Uplink`
+- Transport Node: `edge-tn-1`
+- Logical Switch: `uplink-vlan-ls`
+- Under `Subnets` click `+ADD`
+  - IP Address: `192.168.210.3`
+  - Prefix length: 24     
+- Click **Add**
 
-<details><summary>Screenshot 5.5.6</summary>
-<img src="Images/2018-10-20-16-32-19.png">
+<details><summary>Screenshot 1.4</summary>
+<img src="Images/2019-07-13-09-14-48.png">
 </details>
 <br/>
 
-## Next Steps
+1.5 From the `Advanced Networking & Security > Routers > t0-pks` page, and on the `Routing` pulldown menu, select `Static Routes`
 
-This lab provided an introductory overview of Kubernetes operations. Additional topics such as persistent volumes, network policy, config maps, stateful sets and more will be covered in more detail in the ongoing labs.
+<details><summary>Screenshot 1.5</summary>
+<img src="Images/2019-06-15-14-12-52.png">
+</details>
+<br/>
 
-If you are following the PKS Ninja cirriculum, [click here to proceed to the next lab](../Lab2-PksInstallationPhaseOne). As you proceed through the remaining labs you will learn more advanced details about Kubernetes using additional planespotter app components as examples and then deploy the complete planespotter application on a PKS environment.
+1.6 Click `+ADD` to add a static route using the following parameters:
 
-If you are not following the PKS Ninja cirriculum and would like to deploy the complete planespotter app on VKE, you can find [complete deployment instructions here](https://github.com/Boskey/run_kubernetes_with_vmware)
+- Network: `0.0.0.0/0`
+- Click on **Next Hops +Add**
+- Next Hop: `192.168.210.1` _(Make sure the input stays by pressing [Enter] after enry)_
+- Click **Add** 
 
-### Thank you for completing the Introduction to Kubernetes Lab!
+<details><summary>Screenshot 1.6</summary>
+<img src="Images/2019-06-19-15-17-59.png">
+</details>
+<br/>
 
-### [Please click here to proceed to Lab2: PKS Installation Phase 1](../Lab2-PksInstallationPhaseOne)
+## Step 2: Create the Enterprise PKS Management Plane
+
+2.1 Create NSX-T Logical Switch for the Enterprise PKS Management Plane
+
+Navigate to the `Advanced Networking & Security > Switching` page and click `+ADD` and add a new logical switch with the following parameters:
+
+- Name: `ls-pks-mgmt`
+- Transport Zone: `overlay-tz`
+- Click on **Add**
+
+<details><summary>Screenshot 2.1</summary>
+<img src="Images/2019-06-15-12-33-14.png">
+</details>
+<br/>
+
+2.2 Create NSX-T Tier-1 Router for the Enterprise PKS Management Plane
+
+Navigate to the `Advanced Networking & Security > Routers` page and click `+ > Tier-1 Router` and add a new Tier-1 Router with the following parameters but ignore the Screen Shot for the Edge Cluster variable and leave this value blank. If you select an Edge Cluster for your T1 Router, NSX will deploy a T1-SR and hair pin all your E/W traffic through this SR. If you do not deploy a T1 SR then your E/W traffic will be distributed accross all your Transport Nodes T1-DR. For PKS with NAT we are running all services on the T0-SR and a T1-SR is not needed:
+- Name: `t1-pks-mgmt`
+- Tier-0 Router: `t0-pks`
+- Edge Cluster: edge-cluster-1
+- Click **Add**
+
+<details><summary>Screenshot 2.2.1</summary>
+<img src="Images/2019-06-15-12-35-21.png">
+</details>
+
+<details><summary>Screenshot 2.2.2</summary>
+<img src="Images/2019-06-15-12-38-12.png">
+</details>
+<br/>
+
+2.3 Navigate to the `Advanced Networking & Security > Routers` page, select the `t1-pks-mgmt` router, and on the `Configuration` pulldown menu, select `Router Ports`, and then click `+ADD` and add a new router port with the following parameters:
+
+- Name: `ls-pks-mgmtRouterPort`
+- Type: `Downlink`
+- Logical Switch: `ls-pks-mgmt`
+- Subnets: `+ADD`
+  - IP Address: `172.31.0.1`
+  - Prefix Length: `24`
+- Click **Add**
+
+<details><summary>Screenshot 2.3.1</summary>
+<img src="Images/2019-06-15-12-46-06.png">
+</details>
+
+<details><summary>Screenshot 2.3.2</summary>
+<img src="Images/2019-06-15-12-52-57.png">
+</details>
+<br/>
+
+2.4 From the `Advanced Networking & Security > Routers > t1-pks-mgmt` page, and on the `Routing` pulldown menu, select `Route Advertisement`, under `Router Advertisement` click `Edit` and configure the available options with the following parameters:
+
+- Enable the following fields (Yes):
+  - Status: Enabled
+  - Advertise All Connected Routes: Yes
+- Click `Save`
+
+<details><summary>Screenshot 2.5.0</summary>
+<img src="Images/2019-06-15-12-57-21.png">
+</details>
+
+<details><summary>Screenshot 2.4.2</summary>
+<img src="Images/2019-07-13-10-22-00.png">
+</details>
+<br/>
+
+2.5 To verify the T1 Router, from the `Advanced Networking & Security > Routers > t1-pks-mgmt` page, on the Overview page in the `Tier-0 Connection` section, verify that the `t0-pks` router is displayed
+
+<details><summary>Screenshot 2.5</summary>
+<img src="Images/2019-06-16-17-06-33.png">
+</details>
+<br/>
+
+## Step 3: Create NAT Rules for PKS Management and Compute Plane Operations
+
+3.1 The PKS Management and Compute Plane Networks are deployed to private subnets in the standard Ninja topology (PKS also supports using routed subnets), this requires several NAT rules to be implemented for communications between these isolated private networks and any hosts not directly attached to the subnet, including vCenter and NSX Managers, ESXi Hosts, Jumpboxes & Management hosts. The following steps implement the standard NAT rules used in the Ninja lab environment to enable communications between the PKS Management/Compute Networks and the rest of the lab environment.
+
+To Create a DNAT Rule to enable external access to PKS Management Plane VM's (BOSH Director, Ops Manager, PKS API, Harbor Container Registry), From the `Advanced Networking & Security > Routers` page, click on the `t0-pks` logical router to bring up its details. Click the `Services` Pulldown Menu and select `NAT`. In the NAT pane click `+ADD` and add a DNAT rule with the following parameters:
+
+- On New Nat Rule Screen:
+  - Action: `DNAT`
+  - Destination IP: `10.40.14.2`
+  - Translated IP: `172.31.0.2`
+  - Click `ADD`
+- On New Nat Rule Screen click `+ADD` and add another rule with the following parameters:
+  - Action: `DNAT`
+  - Destination IP: `10.40.14.3`
+  - Translated IP: `172.31.0.3`
+  - Click `ADD` 
+- On New Nat Rule Screen click `+ADD` and add another rule with the following parameters:
+  - Action: `DNAT`
+  - Destination IP: `10.40.14.4`
+  - Translated IP: `172.31.0.4`
+  - Click `ADD`
+- On New Nat Rule Screen click `+ADD` and add another rule with the following parameters:
+  - Action: `DNAT`
+  - Destination IP: `10.40.14.5`
+  - Translated IP: `172.31.0.5`
+  - Click `ADD`
+
+<details><summary>Screenshot 3.1.1</summary>
+<img src="Images/2019-06-16-17-13-44.png">
+</details>
+
+<details><summary>Screenshot 3.1.2</summary>
+<img src="Images/2019-06-16-17-35-30.png">
+</details>
+
+<details><summary>Screenshot 3.1.3</summary>
+<img src="Images/2019-06-16-17-37-48.png">
+</details>
+
+<details><summary>Screenshot 3.1.4</summary>
+<img src="Images/2019-06-16-17-40-58.png">
+</details>
+
+<details><summary>Screenshot 3.1.5</summary>
+<img src="Images/2019-06-16-17-43-31.png">
+</details>
+<br/>
+
+3.4 Add **SNAT** rules to translate the PKS Management Subnets and the Pod and Node IP Blocks assigned to Kubernetes Clusters with valid external IP addresses to support outbound communications
+
+- On New Nat Rule Screen for the `t0-pks` router, click `+ADD` and add another rule with the following parameters:
+  - Priority: `1020`
+  - Action: `SNAT`
+  - Source IP: `172.31.0.2`
+  - Translated IP: `10.40.14.2`
+  - Click `ADD`
+- On New Nat Rule Screen click `+ADD` and add another rule with the following parameters:
+  - Priority: `1020`
+  - Action: `SNAT`
+  - Source IP: `172.31.0.3`
+  - Translated IP: `10.40.14.3`
+  - Click `ADD`
+- On New Nat Rule Screen click `+ADD` and add another rule with the following parameters:
+  - Priority: `1020`
+  - Action: `SNAT`
+  - Source IP: `172.31.0.4`
+  - Translated IP: `10.40.14.4`
+  - Click `ADD`
+- On New Nat Rule Screen click `+ADD` and add another rule with the following parameters:
+  - Priority: `1020`
+  - Action: `SNAT`
+  - Source IP: `172.31.0.5`
+  - Translated IP: `10.40.14.5`
+  - Click `ADD`
+- On New Nat Rule Screen click `+ADD` and add another rule with the following parameters:
+  - Action: `SNAT`
+  - Source IP: `172.31.0.0/24`
+  - Translated IP: `10.40.14.12`
+  - Click `ADD`
+- On New Nat Rule Screen click `+ADD` and add another rule with the following parameters:
+  - Action: `SNAT`
+  - Source IP: `172.15.0.0/24`
+  - Translated IP: `10.40.14.35`
+  - Click `ADD`
+- On New Nat Rule Screen click `+ADD` and add another rule with the following parameters:
+  - Action: `SNAT`
+  - Source IP: `172.16.0.0/24`
+  - Translated IP: `10.40.14.36`
+  - Click `ADD`
+- On New Nat Rule Screen click `+ADD` and add another rule with the following parameters:
+  - Action: `SNAT`
+  - Source IP: `172.16.1.0/24`
+  - Translated IP: `10.40.14.37`
+  - Click `ADD`
+- On New Nat Rule Screen click `+ADD` and add another rule with the following parameters:
+  - Action: `SNAT`
+  - Source IP: `172.16.2.0/24`
+  - Translated IP: `10.40.14.38`
+  - Click `ADD`
+- On New Nat Rule Screen click `+ADD` and add another rule with the following parameters:
+  - Action: `SNAT`
+  - Source IP: `172.16.3.0/24`
+  - Translated IP: `10.40.14.39`
+  - Click `ADD`
+- On New Nat Rule Screen click `+ADD` and add another rule with the following parameters:
+  - Action: `SNAT`
+  - Source IP: `172.15.0.0/16`
+  - Translated IP: `10.40.14.32`
+  - Click `ADD`
+- On New Nat Rule Screen click `+ADD` and add another rule with the following parameters:
+  - Action: `SNAT`
+  - Source IP: `172.16.0.0/16`
+  - Translated IP: `10.40.14.40`
+  - Click `ADD`
+
+
+<details><summary>Screenshot 3.4</summary>
+<img src="Images/2019-07-13-14-11-23.png">
+</details>
+<br/>
+
+## Step 4: Create IP Pools & Blocks needed for PKS
+
+Explanation from the [Documentation]():
+
+```text
+Installing VMware Enterprise PKS on vSphere with NSX-T requires the creation of NSX IP blocks for Kubernetes node and pod networks, as well as a Floating IP Pool from which you can assign routable IP addresses to cluster resources.
+
+Create separate NSX-T IP Blocks for the node networks and the pod networks. The subnets for both nodes and pods should have a size of 256 (/16). For more information, see Plan IP Blocks and Reserved IP Blocks.
+
+NODE-IP-BLOCK is used by Enterprise PKS to assign address space to Kubernetes master and worker nodes when new clusters are deployed or a cluster increases its scale.
+POD-IP-BLOCK is used by the NSX-T Container Plug-in (NCP) to assign address space to Kubernetes pods through the Container Networking Interface (CNI).
+
+In addition, create a Floating IP Pool from which to assign routable IP addresses to components. This network provides your load balancing address space for each Kubernetes cluster created by Enterprise PKS. The network also provides IP addresses for Kubernetes API access and Kubernetes exposed services. For example, 10.172.2.0/24 provides 256 usable IPs. This network is used when creating the virtual IP pools, or when the services are deployed. You enter this network in the Floating IP Pool ID field in the Networking pane of the Enterprise PKS tile.
+
+```
+
+ 4.1 To Create the Pods & Nodes IP Blocks, from the NSX Manager UI Homepage, Navigate to `Advanced Networking & Security > IPAM` and click `+ADD` to add an IP block with the following values:
+
+- Name: `ip-block-nodes-deployments`
+- CIDR: `172.15.0.0/16`
+- Click `ADD`
+- Click `+ADD` to add an additional IP Address Block
+- Name: `ip-block-pods-deployments`
+- CIDR: `172.16.0.0/16`
+- Click `ADD`
+
+<details><summary>Screenshot 4.1.1</summary>
+<img src="Images/2019-07-13-14-15-29.png">
+</details>
+
+<details><summary>Screenshot 4.1.2</summary>
+<img src="Images/2019-07-13-14-17-22.png">
+</details>
+
+<details><summary>Screenshot 4.1.3</summary>
+<img src="Images/2019-07-13-14-20-05.png">
+</details>
+<br/>
+
+4.2 To create the floating IP Pool for Kubernetes Load Balancer Virtual IP Addresses, in the NSX Manager UI navigate to `Advanced Networking & Security > Inventory > Groups` page and click on the `IP Pools` tab. Click `+ADD` and add an IP Pool with the following parameters:
+
+- Name: `ip-pool-vips`
+- Click `Add` under Subnets
+- IP Range: `10.40.14.34-10.40.14.62`
+- Gateway: `10.40.14.33`
+- CIDR: `10.40.14.32/27`
+- DNS Servers: `192.168.110.10`
+- DNS Suffix: `corp.local`
+- Click **Add**
+
+<details><summary>Screenshot 4.2.1</summary>
+<img src="Images/2019-06-17-15-14-12.png">
+</details>
+
+<details><summary>Screenshot 4.2.2</summary>
+<img src="Images/2019-06-17-15-16-44.png">
+</details>
+<br/>
+
+------------------
+
+
+**You have now completed the NSX-T Configuration for PKS lab. There are some additional NSX-T related configurations for PKS that will be need to be made when setting up the PKS Control Plane, and those are detailed in the PKS Install Part 1 Lab Guide**
